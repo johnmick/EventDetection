@@ -14,7 +14,7 @@ var CanvasArtist;
 		"#008080",
 		"#F4A460",
 		"#BC8F8F",
-		"#00FF00",
+		"#00FF00"
 	];
 
 	CanvasArtist = function(opts) {
@@ -24,13 +24,19 @@ var CanvasArtist;
 		leftOffset = opts.leftOffset;
 		loadImages();
 
-		CanvasArtist.resizeCanvas(opts.width, opts.height);
+		CanvasArtist.resizeCanvas();
 		return CanvasArtist;
 	};
 
-	CanvasArtist.resizeCanvas = function(width, height) {
-		canvas.width = width;
-		canvas.height = height;
+	CanvasArtist.images = images;
+
+	CanvasArtist.getColor = function(index) {
+		return timeColors[index];
+	};
+
+	CanvasArtist.resizeCanvas = function() {
+		canvas.width = $(window).width()-230;
+		canvas.height = $(window).height();
 		canvas.style.top = topOffset;
 		canvas.style.left = leftOffset;
 	};
@@ -63,7 +69,7 @@ var CanvasArtist;
 		ctx.closePath();
 	};
 
-	CanvasArtist.drawImageAtPoint = function(x, y, imgName)
+	CanvasArtist.drawImageAtPoint = function(x, y, imgName, label)
 	{
 		var img = images[imgName];
 
@@ -72,10 +78,15 @@ var CanvasArtist;
 			ctx.globalAlpha = .75;
 			ctx.drawImage(img, x-img.width/2, y-img.height/2);
 			ctx.globalAlpha = 1;
+			if (label !== undefined)
+			{
+				ctx.font = "11pt Arial bold";
+				ctx.fillText(label, x-30, y-26);
+			}
 		}
 	};
 
-	CanvasArtist.drawTrajectory = function(points)
+	CanvasArtist.drawTrajectory = function(points, events)
 	{
 		ctx.beginPath();
 		ctx.moveTo(points[0].x, points[0].y);
@@ -89,6 +100,17 @@ var CanvasArtist;
 			ctx.strokeStyle = timeColors[i];
 			ctx.fillStyle = timeColors[i];
 			CanvasArtist.drawCircleAtPoint(points[i].x, points[i].y, 6, true);
+		}
+
+		for (var flyingEvent in events)
+		{
+			var vehicleEventTimestamps = events[flyingEvent];
+			ctx.strokeStyle = "#FF0000";
+			for (var timestamp in vehicleEventTimestamps)
+			{
+				var flyingEventPoint = points[timestamp];
+				CanvasArtist.drawCircleAtPoint(flyingEventPoint.x, flyingEventPoint.y, flyingEventPoint.r, false);
+			}
 		}
 		ctx.fillStyle = "#000000";
 		ctx.strokeStyle = "#000000";
@@ -117,6 +139,235 @@ var CanvasArtist;
 
 })();
 
+var ConsoleOutput;
+
+(function(){
+	var table, frag, container, messageContainer, counter;
+
+	ConsoleOutput = function(opts)
+	{
+		table = document.getElementById(opts.table);
+		frag = document.createDocumentFragment();
+		container = document.getElementById(opts.container);
+		messageContainer = document.getElementById(opts.messages);
+		counter = document.getElementById(opts.counter);
+		ConsoleOutput.resize();
+		return ConsoleOutput;
+	};
+
+	ConsoleOutput.logEvents = function()
+	{
+		var count = 0;
+		var vehicles = VehicleManager.retrieveEvents();
+		ConsoleOutput.clear();
+		for (var vehicleID in vehicles)
+		{
+			var vehicle = vehicles[vehicleID];
+			var rows = [];
+			for (var vehicleEvent in vehicle)
+			{
+				var eventTimes = vehicle[vehicleEvent];
+				for (var eventPoint in eventTimes)
+				{
+					var eventColor = CanvasArtist.getColor(eventPoint);
+					var tr = document.createElement("TR");
+					var labelCell = document.createElement("TD");
+					var colorCell = document.createElement("TD");
+
+					labelCell.innerHTML = "&rarr; " + vehicleEvent + " at Time #" + eventPoint;
+					colorCell.style.width = "5px";
+					colorCell.style.backgroundColor = eventColor;
+					if (eventPoint === 9)
+					{
+						var img = document.createElement("img");
+						img.src = CanvasArtist.images["star"].src;
+						colorCell.appendChild(img);
+					}
+
+
+					tr.appendChild(labelCell);
+					tr.appendChild(colorCell);
+					rows.push(tr);
+				}
+			}
+			if (rows.length > 0)
+			{
+				var tr = document.createElement("TR");
+				var td = document.createElement("TD");
+				td.innerHTML = "Events For " + vehicleID;
+				td.style.fontWeight = "bold";
+				td.colSpan = 2;
+				tr.appendChild(td);
+
+				frag.appendChild(tr);
+				for (var i=0; i < rows.length; i ++)
+				{
+					count++;
+					frag.appendChild(rows[i]);
+				}
+			}
+		}
+		counter.innerHTML = count/2;
+		table.appendChild(frag);
+	};
+
+	ConsoleOutput.resize = function()
+	{
+		var height = $(window).height();
+		container.style.height = height-5;
+		messageContainer.style.height = height-55;
+
+	};
+
+	ConsoleOutput.clear = function()
+	{
+		$(table).empty();
+	};
+})();
+var VehicleManager;
+
+(function(){
+	var vehicles = [];
+
+	VehicleManager = function(opts) {
+
+	};
+
+	VehicleManager.addNewVehicle = function(opts) {
+		var vehicle = new Vehicle({
+			id : vehicles.length,
+			startx : opts.startx,
+			starty : opts.starty
+		});
+		VehicleManager.workingVehicle = vehicle;
+		vehicles.push(vehicle);
+	};
+
+	VehicleManager.detectEvents = function() {
+		var vehiclesToCheck = vehicles.slice(0);
+
+		for (var i=vehicles.length-1; i > -1; i--)
+		{
+			for (var k=vehiclesToCheck.length-1; k > -1; k--)
+			{
+				if (k !== i && vehiclesToCheck[k] !== null)
+				{
+					vehicles[i].detectEvents(vehiclesToCheck[k]);
+				}
+			}
+			vehiclesToCheck[i] = null;
+		}
+	};
+
+	VehicleManager.retrieveEvents = function() {
+		var events = {};
+		var loop = vehicles.length;
+		for (var i=0; i < loop; i++)
+		{
+			events["Vehicle " + i] = vehicles[i].events;
+		}
+		return events;
+	};
+
+	VehicleManager.redraw = function() {
+		CanvasArtist.clear();
+		for (var i=0; i < vehicles.length; i++)
+		{
+			vehicles[i].draw();
+		}
+	};
+
+	VehicleManager.clear = function() {
+		vehicles = [];
+	};
+})();
+var Vehicle;
+
+(function(){
+	var circleRadius = 35;
+
+	Vehicle = function(opts){
+		this.id = opts.id;
+		this.points = [];
+		this.events = {};
+		if (opts.startx !== undefined && opts.starty !== undefined)
+		{
+			this.setStartPoint(opts.startx,opts.starty);
+		}
+	};
+
+	Vehicle.prototype.setStartPoint = function(x, y)
+	{
+		this.startPoint = new Waypoint(x, y, circleRadius);
+		CanvasArtist.drawImageAtPoint(x,y,"airplane", "Vehicle " + this.id);
+	};
+
+	Vehicle.prototype.setEndPoint = function(x, y)
+	{
+		this.endPoint = new Waypoint(x, y, circleRadius);
+		this.generateWayPoints();
+		this.draw();
+	};
+
+	Vehicle.prototype.generateWayPoints = function()
+	{
+		var xMovement = (this.endPoint.x - this.startPoint.x) / 9;
+		var yMovement = (this.endPoint.y - this.startPoint.y) / 9;
+
+		this.points.push(this.startPoint);
+		for (var i=1; i < 9; i++)
+		{
+			this.points.push(new Waypoint(
+				this.startPoint.x + (xMovement * i) + Math.floor(Math.random()*25) + 10,
+				this.startPoint.y + yMovement * i + Math.floor(Math.random()*25) + 10,
+				circleRadius
+			));
+		}
+		this.points.push(this.endPoint);
+	};
+
+	Vehicle.prototype.draw = function()
+	{
+		CanvasArtist.drawTrajectory(this.points, this.events);
+		CanvasArtist.drawImageAtPoint(this.startPoint.x, this.startPoint.y, "airplane", "Vehicle " + this.id);
+		CanvasArtist.drawImageAtPoint(this.endPoint.x, this.endPoint.y, "star");
+	};
+
+	Vehicle.prototype.detectEvents = function(vehicle2)
+	{
+		for (var i=this.points.length-1; i >-1; i--)
+		{
+			if (this.points[i].tooClose(vehicle2.points[i]))
+			{
+				this.addEvent(vehicle2, i);
+				vehicle2.addEvent(this, i);
+			}
+		}
+	};
+
+	Vehicle.prototype.addEvent = function(vehicle, point)
+	{
+		if (this.events["Vehicle " + vehicle.id] === undefined)
+		{
+			this.events["Vehicle " + vehicle.id] = {};
+		}
+		this.events["Vehicle " + vehicle.id][point] = true;
+	};
+
+
+	var Waypoint = function(x, y, r) {
+		this.x = x;
+		this.y = y;
+		this.r = r;
+	};
+
+	Waypoint.prototype.tooClose = function(point) {
+		var xDifference = point.x - this.x;
+		var yDifference = point.y - this.y;
+		var distance = Math.sqrt(xDifference * xDifference + yDifference * yDifference);
+		return distance < point.r + this.r;
+	};
+})();
 var UIManager;
 
 (function(){
@@ -125,7 +376,15 @@ var UIManager;
 	UIManager = function(opts) {
 		$(CanvasArtist.getCanvas()).click(UIManager.canvasClicked);
 		$("#" + opts.addvehiclebutton).click(UIManager.addVehicleRequest);
+		$(window).resize(UIManager.resize);
+		$("#" + opts.clearbutton).click(UIManager.clear);
 		return UIManager;
+	};
+
+	UIManager.resize = function()
+	{
+		CanvasArtist.resizeCanvas();
+		UIManager.redraw();
 	};
 
 	UIManager.addVehicleRequest = function()
@@ -147,11 +406,10 @@ var UIManager;
 				UIManager.canvasClicked(e);
 				break;
 			case "addStartPoint":
-				var vehicle = new Vehicle({
+				VehicleManager.addNewVehicle({
 					startx : CanvasArtist.calculateX(e.pageX), 
 					starty : CanvasArtist.calculateY(e.pageY)
 				});
-				VehicleManager.addNewVehicle(vehicle);
 				mode = "addEndPoint";
 				break;
 			case "addEndPoint":
@@ -159,10 +417,18 @@ var UIManager;
 					CanvasArtist.calculateX(e.pageX), 
 					CanvasArtist.calculateY(e.pageY)
 				);
-				VehicleManager.redraw();
+				VehicleManager.detectEvents();
+				UIManager.redraw();
+				ConsoleOutput.logEvents();
 				mode = "def";
 				break;
 		}
+	};
+
+	UIManager.redraw = function()
+	{
+		VehicleManager.redraw();
+		ConsoleOutput.resize();
 	};
 
 	UIManager.getMode = function()
@@ -174,122 +440,12 @@ var UIManager;
 	{
 		mode = m;
 	};
-})();
-var ConsoleOutput;
 
-(function(){
-	var table, frag;
-
-	ConsoleOutput = function(opts)
+	UIManager.clear = function()
 	{
-		table = document.getElementById(opts.table);
-		frag = document.createDocumentFragment();
-		$("#" + opts.clearbutton).click(ConsoleOutput.clear);
-		return ConsoleOutput;
-	};
-
-	ConsoleOutput.log = function(message)
-	{
-		var tr = document.createElement("TR");
-		var num = document.createElement("TD");
-		var msg = document.createElement("TD");
-		msg.innerHTML = message;
-		msg.style.borderBottom="1px solid #000000";
-		num.style.borderTop="1px solid #000000";
-		msg.style.borderTop="1px solid #000000";
-		tr.appendChild(msg);
-		frag.appendChild(tr);
-		table.appendChild(frag);
-	};
-
-	ConsoleOutput.clear = function()
-	{
-		$(table).empty();
-	};
-})();
-var VehicleManager;
-
-(function(){
-	var vehicles = [];
-
-	VehicleManager = function(opts) {
-
-	};
-
-	VehicleManager.addNewVehicle = function(vehicle) {
-		VehicleManager.workingVehicle = vehicle;
-		vehicles.push(vehicle);
-	};
-
-	VehicleManager.redraw = function() {
-		CanvasArtist.clear();
-		for (var i=0; i < vehicles.length; i++)
-		{
-			vehicles[i].draw();
-		}
-	};
-})();
-var Vehicle;
-
-(function(){
-	var circleRadius = 5;
-
-	Vehicle = function(opts){
-		this.startPoint;
-		this.endPoint;
-		this.points = [];
-		if (opts.startx !== undefined && opts.starty !== undefined)
-		{
-			this.setStartPoint(opts.startx,opts.starty);
-		}
-	};
-
-	Vehicle.prototype.setStartPoint = function(x, y)
-	{
-		this.startPoint = new Point(x, y, circleRadius);
-		CanvasArtist.drawImageAtPoint(x,y,"airplane");
-	};
-
-	Vehicle.prototype.setEndPoint = function(x, y)
-	{
-		this.endPoint = new Point(x, y, circleRadius);
-		this.generateWayPoints();
-		this.draw();
-	};
-
-	Vehicle.prototype.generateWayPoints = function()
-	{
-		var xMovement = (this.endPoint.x - this.startPoint.x) / 9;
-		var yMovement = (this.endPoint.y - this.startPoint.y) / 9;
-
-		this.points.push(this.startPoint);
-		for (var i=1; i < 9; i++)
-		{
-			this.points.push(new Point(
-				this.startPoint.x + (xMovement * i) + Math.floor(Math.random()*25) + 10,
-				this.startPoint.y + yMovement * i + Math.floor(Math.random()*25) + 10,
-				circleRadius
-			));
-		}
-		this.points.push(this.endPoint);
-	};
-
-	Vehicle.prototype.draw = function()
-	{
-		CanvasArtist.drawTrajectory(this.points);
-		CanvasArtist.drawImageAtPoint(this.startPoint.x, this.startPoint.y, "airplane");
-		CanvasArtist.drawImageAtPoint(this.endPoint.x, this.endPoint.y, "star");
-	};
-
-	Vehicle.prototype.collides = function(vehicle2)
-	{
-
-
-	};
-
-	var Point = function(x, y) {
-		this.x = x;
-		this.y = y;
+		VehicleManager.clear();
+		UIManager.redraw();
+		ConsoleOutput.logEvents();
 	};
 })();
 (function(){
@@ -298,20 +454,20 @@ var Vehicle;
 	$(document).ready(function(){
 		EventDetection.CanvasArtist = CanvasArtist({
 			canvasid:"CANVAS",
-			width:$(document).width()-230,
-			height:$(document).height(),
 			leftOffset:"225px",
 			topOffset:"0px"
 		});
 
 		EventDetection.UIManager = UIManager({
-			addvehiclebutton:"ADD_VEHICLE_BUTTON"
-			
+			addvehiclebutton:"ADD_VEHICLE_BUTTON",
+			clearbutton:"CLEAR_CONSOLE_BUTTON"
 		});
 
 		EventDetection.ConsoleOutput = ConsoleOutput({
 			table:"CONSOLE_TABLE",
-			clearbutton:"CLEAR_CONSOLE_BUTTON"
+			messages:"CONSOLE_MESSAGES",
+			container:"CONSOLE_CONTAINER",
+			counter:"EVENT_COUNT"
 		});
 
 		EventDetection.VehicleManager = VehicleManager;

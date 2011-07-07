@@ -4,8 +4,8 @@ body {
 
 div#CONTROLS_CONTAINER
 {
-	background-color:#DEDEFF;
-	width:225px;
+	text-align:center;
+	margin-top:2px;
 }
 
 div#CONSOLE_CONTAINER
@@ -19,7 +19,6 @@ div#CONSOLE_CONTAINER
 
 div#CONSOLE_MESSAGES
 {
-	height:450px;
 	width:215px;
 	background-color:#EDEDFF;
 	overflow:auto;

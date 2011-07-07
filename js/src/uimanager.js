@@ -6,7 +6,15 @@ var UIManager;
 	UIManager = function(opts) {
 		$(CanvasArtist.getCanvas()).click(UIManager.canvasClicked);
 		$("#" + opts.addvehiclebutton).click(UIManager.addVehicleRequest);
+		$(window).resize(UIManager.resize);
+		$("#" + opts.clearbutton).click(UIManager.clear);
 		return UIManager;
+	};
+
+	UIManager.resize = function()
+	{
+		CanvasArtist.resizeCanvas();
+		UIManager.redraw();
 	};
 
 	UIManager.addVehicleRequest = function()
@@ -28,11 +36,10 @@ var UIManager;
 				UIManager.canvasClicked(e);
 				break;
 			case "addStartPoint":
-				var vehicle = new Vehicle({
+				VehicleManager.addNewVehicle({
 					startx : CanvasArtist.calculateX(e.pageX), 
 					starty : CanvasArtist.calculateY(e.pageY)
 				});
-				VehicleManager.addNewVehicle(vehicle);
 				mode = "addEndPoint";
 				break;
 			case "addEndPoint":
@@ -40,10 +47,18 @@ var UIManager;
 					CanvasArtist.calculateX(e.pageX), 
 					CanvasArtist.calculateY(e.pageY)
 				);
-				VehicleManager.redraw();
+				VehicleManager.detectEvents();
+				UIManager.redraw();
+				ConsoleOutput.logEvents();
 				mode = "def";
 				break;
 		}
+	};
+
+	UIManager.redraw = function()
+	{
+		VehicleManager.redraw();
+		ConsoleOutput.resize();
 	};
 
 	UIManager.getMode = function()
@@ -54,5 +69,12 @@ var UIManager;
 	UIManager.setMode = function(m)
 	{
 		mode = m;
+	};
+
+	UIManager.clear = function()
+	{
+		VehicleManager.clear();
+		UIManager.redraw();
+		ConsoleOutput.logEvents();
 	};
 })();

@@ -3,10 +3,10 @@ BUILD_DIR = js/build
 
 BASE_FILES = ${SRC_DIR}/intro.js\
 	${SRC_DIR}/canvasartist.js\
-	${SRC_DIR}/uimanager.js\
 	${SRC_DIR}/console.js\
 	${SRC_DIR}/vehiclemanager.js\
 	${SRC_DIR}/vehicle.js\
+	${SRC_DIR}/uimanager.js\
 	${SRC_DIR}/main.js\
 	${SRC_DIR}/outro.js
 

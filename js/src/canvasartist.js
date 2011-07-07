@@ -13,7 +13,7 @@ var CanvasArtist;
 		"#008080",
 		"#F4A460",
 		"#BC8F8F",
-		"#00FF00",
+		"#00FF00"
 	];
 
 	CanvasArtist = function(opts) {
@@ -23,13 +23,19 @@ var CanvasArtist;
 		leftOffset = opts.leftOffset;
 		loadImages();
 
-		CanvasArtist.resizeCanvas(opts.width, opts.height);
+		CanvasArtist.resizeCanvas();
 		return CanvasArtist;
 	};
 
-	CanvasArtist.resizeCanvas = function(width, height) {
-		canvas.width = width;
-		canvas.height = height;
+	CanvasArtist.images = images;
+
+	CanvasArtist.getColor = function(index) {
+		return timeColors[index];
+	};
+
+	CanvasArtist.resizeCanvas = function() {
+		canvas.width = $(window).width()-230;
+		canvas.height = $(window).height();
 		canvas.style.top = topOffset;
 		canvas.style.left = leftOffset;
 	};
@@ -62,7 +68,7 @@ var CanvasArtist;
 		ctx.closePath();
 	};
 
-	CanvasArtist.drawImageAtPoint = function(x, y, imgName)
+	CanvasArtist.drawImageAtPoint = function(x, y, imgName, label)
 	{
 		var img = images[imgName];
 
@@ -71,10 +77,15 @@ var CanvasArtist;
 			ctx.globalAlpha = .75;
 			ctx.drawImage(img, x-img.width/2, y-img.height/2);
 			ctx.globalAlpha = 1;
+			if (label !== undefined)
+			{
+				ctx.font = "11pt Arial bold";
+				ctx.fillText(label, x-30, y-26);
+			}
 		}
 	};
 
-	CanvasArtist.drawTrajectory = function(points)
+	CanvasArtist.drawTrajectory = function(points, events)
 	{
 		ctx.beginPath();
 		ctx.moveTo(points[0].x, points[0].y);
@@ -88,6 +99,17 @@ var CanvasArtist;
 			ctx.strokeStyle = timeColors[i];
 			ctx.fillStyle = timeColors[i];
 			CanvasArtist.drawCircleAtPoint(points[i].x, points[i].y, 6, true);
+		}
+
+		for (var flyingEvent in events)
+		{
+			var vehicleEventTimestamps = events[flyingEvent];
+			ctx.strokeStyle = "#FF0000";
+			for (var timestamp in vehicleEventTimestamps)
+			{
+				var flyingEventPoint = points[timestamp];
+				CanvasArtist.drawCircleAtPoint(flyingEventPoint.x, flyingEventPoint.y, flyingEventPoint.r, false);
+			}
 		}
 		ctx.fillStyle = "#000000";
 		ctx.strokeStyle = "#000000";

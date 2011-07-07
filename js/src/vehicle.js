@@ -1,12 +1,12 @@
 var Vehicle;
 
 (function(){
-	var circleRadius = 5;
+	var circleRadius = 35;
 
 	Vehicle = function(opts){
-		this.startPoint;
-		this.endPoint;
+		this.id = opts.id;
 		this.points = [];
+		this.events = {};
 		if (opts.startx !== undefined && opts.starty !== undefined)
 		{
 			this.setStartPoint(opts.startx,opts.starty);
@@ -15,13 +15,13 @@ var Vehicle;
 
 	Vehicle.prototype.setStartPoint = function(x, y)
 	{
-		this.startPoint = new Point(x, y, circleRadius);
-		CanvasArtist.drawImageAtPoint(x,y,"airplane");
+		this.startPoint = new Waypoint(x, y, circleRadius);
+		CanvasArtist.drawImageAtPoint(x,y,"airplane", "Vehicle " + this.id);
 	};
 
 	Vehicle.prototype.setEndPoint = function(x, y)
 	{
-		this.endPoint = new Point(x, y, circleRadius);
+		this.endPoint = new Waypoint(x, y, circleRadius);
 		this.generateWayPoints();
 		this.draw();
 	};
@@ -34,7 +34,7 @@ var Vehicle;
 		this.points.push(this.startPoint);
 		for (var i=1; i < 9; i++)
 		{
-			this.points.push(new Point(
+			this.points.push(new Waypoint(
 				this.startPoint.x + (xMovement * i) + Math.floor(Math.random()*25) + 10,
 				this.startPoint.y + yMovement * i + Math.floor(Math.random()*25) + 10,
 				circleRadius
@@ -45,19 +45,43 @@ var Vehicle;
 
 	Vehicle.prototype.draw = function()
 	{
-		CanvasArtist.drawTrajectory(this.points);
-		CanvasArtist.drawImageAtPoint(this.startPoint.x, this.startPoint.y, "airplane");
+		CanvasArtist.drawTrajectory(this.points, this.events);
+		CanvasArtist.drawImageAtPoint(this.startPoint.x, this.startPoint.y, "airplane", "Vehicle " + this.id);
 		CanvasArtist.drawImageAtPoint(this.endPoint.x, this.endPoint.y, "star");
 	};
 
-	Vehicle.prototype.collides = function(vehicle2)
+	Vehicle.prototype.detectEvents = function(vehicle2)
 	{
-
-
+		for (var i=this.points.length-1; i >-1; i--)
+		{
+			if (this.points[i].tooClose(vehicle2.points[i]))
+			{
+				this.addEvent(vehicle2, i);
+				vehicle2.addEvent(this, i);
+			}
+		}
 	};
 
-	var Point = function(x, y) {
+	Vehicle.prototype.addEvent = function(vehicle, point)
+	{
+		if (this.events["Vehicle " + vehicle.id] === undefined)
+		{
+			this.events["Vehicle " + vehicle.id] = {};
+		}
+		this.events["Vehicle " + vehicle.id][point] = true;
+	};
+
+
+	var Waypoint = function(x, y, r) {
 		this.x = x;
 		this.y = y;
+		this.r = r;
+	};
+
+	Waypoint.prototype.tooClose = function(point) {
+		var xDifference = point.x - this.x;
+		var yDifference = point.y - this.y;
+		var distance = Math.sqrt(xDifference * xDifference + yDifference * yDifference);
+		return distance < point.r + this.r;
 	};
 })();
