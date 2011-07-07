@@ -1,0 +1,32 @@
+body {
+	margin:0px 0px 0px 0px;
+}
+
+div#CONTROLS_CONTAINER
+{
+	background-color:#DEDEFF;
+	width:225px;
+}
+
+div#CONSOLE_CONTAINER
+{
+	font-weight:bold;
+	height:500px;
+	width:220px;
+	border:2px inset #000000;
+	background-color:#CECEFF;
+}
+
+div#CONSOLE_MESSAGES
+{
+	height:450px;
+	width:215px;
+	background-color:#EDEDFF;
+	overflow:auto;
+}
+
+canvas#CANVAS
+{
+	position:absolute;
+	border-left:1px solid #000000;
+}
