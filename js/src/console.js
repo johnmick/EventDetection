@@ -36,7 +36,7 @@ var ConsoleOutput;
 					labelCell.innerHTML = "&rarr; " + vehicleEvent + " at Time #" + eventPoint;
 					colorCell.style.width = "5px";
 					colorCell.style.backgroundColor = eventColor;
-					if (eventPoint === 9)
+					if (eventPoint == 9)
 					{
 						var img = document.createElement("img");
 						img.src = CanvasArtist.images["star"].src;
@@ -75,7 +75,6 @@ var ConsoleOutput;
 		var height = $(window).height();
 		container.style.height = height-5;
 		messageContainer.style.height = height-55;
-
 	};
 
 	ConsoleOutput.clear = function()

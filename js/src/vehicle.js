@@ -7,6 +7,7 @@ var Vehicle;
 		this.id = opts.id;
 		this.points = [];
 		this.events = {};
+		this.displayed = true;
 		if (opts.startx !== undefined && opts.starty !== undefined)
 		{
 			this.setStartPoint(opts.startx,opts.starty);
