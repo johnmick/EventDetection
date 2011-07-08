@@ -11,15 +11,14 @@ div#CONTROLS_CONTAINER
 div#CONSOLE_CONTAINER
 {
 	font-weight:bold;
-	height:500px;
-	width:220px;
+	width:250px;
 	border:2px inset #000000;
 	background-color:#CECEFF;
 }
 
 div#CONSOLE_MESSAGES
 {
-	width:215px;
+	width:245px;
 	background-color:#EDEDFF;
 	overflow:auto;
 }
