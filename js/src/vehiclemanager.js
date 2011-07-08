@@ -19,18 +19,22 @@ var VehicleManager;
 
 	VehicleManager.detectEvents = function() {
 		var vehiclesToCheck = vehicles.slice(0);
-
+		var numChecked = 0;
+		var startTime = new Date();
 		for (var i=vehicles.length-1; i > -1; i--)
 		{
 			for (var k=vehiclesToCheck.length-1; k > -1; k--)
 			{
 				if (k !== i && vehiclesToCheck[k] !== null)
 				{
+					numChecked++;
 					vehicles[i].detectEvents(vehiclesToCheck[k]);
 				}
 			}
 			vehiclesToCheck[i] = null;
 		}
+		ConsoleOutput.detectTime = new Date() - startTime;
+		ConsoleOutput.numChecked = numChecked;
 	};
 
 	VehicleManager.retrieveEvents = function() {
