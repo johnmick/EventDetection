@@ -35,7 +35,7 @@ var CanvasArtist;
 	};
 
 	CanvasArtist.resizeCanvas = function() {
-		canvas.width = $(window).width()-230;
+		canvas.width = $(window).width()-260;
 		canvas.height = $(window).height();
 		canvas.style.top = topOffset;
 		canvas.style.left = leftOffset;
@@ -142,7 +142,7 @@ var CanvasArtist;
 var ConsoleOutput;
 
 (function(){
-	var table, frag, container, messageContainer, counter;
+	var table, frag, container, messageContainer, counter, numCheckedLabel, detectTimeLabel, drawTimeLabel;
 
 	ConsoleOutput = function(opts)
 	{
@@ -151,6 +151,9 @@ var ConsoleOutput;
 		container = document.getElementById(opts.container);
 		messageContainer = document.getElementById(opts.messages);
 		counter = document.getElementById(opts.counter);
+		numCheckedLabel = document.getElementById(opts.numchecked);
+		detectTimeLabel = document.getElementById(opts.detecttime);
+		drawTimeLabel = document.getElementById(opts.drawtime);
 		ConsoleOutput.resize();
 		return ConsoleOutput;
 	};
@@ -183,8 +186,6 @@ var ConsoleOutput;
 						img.src = CanvasArtist.images["star"].src;
 						colorCell.appendChild(img);
 					}
-
-
 					tr.appendChild(labelCell);
 					tr.appendChild(colorCell);
 					rows.push(tr);
@@ -207,15 +208,23 @@ var ConsoleOutput;
 				}
 			}
 		}
-		counter.innerHTML = count/2;
+		ConsoleOutput.numEvents = count/2;
 		table.appendChild(frag);
+	};
+
+	ConsoleOutput.setLabels = function()
+	{
+		counter.innerHTML = ConsoleOutput.numEvents;
+		numCheckedLabel.innerHTML = ConsoleOutput.numChecked;
+		detectTimeLabel.innerHTML = ConsoleOutput.detectTime;
+		drawTimeLabel.innerHTML = ConsoleOutput.drawTime;
 	};
 
 	ConsoleOutput.resize = function()
 	{
 		var height = $(window).height();
-		container.style.height = height-5;
-		messageContainer.style.height = height-55;
+		container.style.height = height-5 + "px";
+		messageContainer.style.height = height-125 + "px";
 	};
 
 	ConsoleOutput.clear = function()
@@ -244,18 +253,22 @@ var VehicleManager;
 
 	VehicleManager.detectEvents = function() {
 		var vehiclesToCheck = vehicles.slice(0);
-
+		var numChecked = 0;
+		var startTime = new Date();
 		for (var i=vehicles.length-1; i > -1; i--)
 		{
 			for (var k=vehiclesToCheck.length-1; k > -1; k--)
 			{
 				if (k !== i && vehiclesToCheck[k] !== null)
 				{
+					numChecked++;
 					vehicles[i].detectEvents(vehiclesToCheck[k]);
 				}
 			}
 			vehiclesToCheck[i] = null;
 		}
+		ConsoleOutput.detectTime = new Date() - startTime;
+		ConsoleOutput.numChecked = numChecked;
 	};
 
 	VehicleManager.retrieveEvents = function() {
@@ -269,6 +282,7 @@ var VehicleManager;
 	};
 
 	VehicleManager.redraw = function() {
+		var startTime = new Date();
 		CanvasArtist.clear();
 		for (var i=0; i < vehicles.length; i++)
 		{
@@ -418,8 +432,11 @@ var UIManager;
 					CanvasArtist.calculateY(e.pageY)
 				);
 				VehicleManager.detectEvents();
+				var startTime = new Date();
 				UIManager.redraw();
 				ConsoleOutput.logEvents();
+				ConsoleOutput.drawTime = new Date() - startTime;
+				ConsoleOutput.setLabels();
 				mode = "def";
 				break;
 		}
@@ -454,7 +471,7 @@ var UIManager;
 	$(document).ready(function(){
 		EventDetection.CanvasArtist = CanvasArtist({
 			canvasid:"CANVAS",
-			leftOffset:"225px",
+			leftOffset:"255px",
 			topOffset:"0px"
 		});
 
@@ -467,11 +484,13 @@ var UIManager;
 			table:"CONSOLE_TABLE",
 			messages:"CONSOLE_MESSAGES",
 			container:"CONSOLE_CONTAINER",
-			counter:"EVENT_COUNT"
+			counter:"EVENT_COUNT",
+			detecttime:"ALG_TIME",
+			numchecked:"NUM_WAYPOINTS",
+			drawtime:"DRAW_TIME"
 		});
 
 		EventDetection.VehicleManager = VehicleManager;
-
 	});
 })();
 })();
