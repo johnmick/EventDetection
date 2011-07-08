@@ -48,8 +48,11 @@ var UIManager;
 					CanvasArtist.calculateY(e.pageY)
 				);
 				VehicleManager.detectEvents();
+				var startTime = new Date();
 				UIManager.redraw();
 				ConsoleOutput.logEvents();
+				ConsoleOutput.drawTime = new Date() - startTime;
+				ConsoleOutput.setLabels();
 				mode = "def";
 				break;
 		}
