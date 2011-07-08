@@ -34,7 +34,7 @@ var CanvasArtist;
 	};
 
 	CanvasArtist.resizeCanvas = function() {
-		canvas.width = $(window).width()-230;
+		canvas.width = $(window).width()-260;
 		canvas.height = $(window).height();
 		canvas.style.top = topOffset;
 		canvas.style.left = leftOffset;
