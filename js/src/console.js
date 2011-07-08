@@ -1,7 +1,7 @@
 var ConsoleOutput;
 
 (function(){
-	var table, frag, container, messageContainer, counter;
+	var table, frag, container, messageContainer, counter, numCheckedLabel, detectTimeLabel, drawTimeLabel;
 
 	ConsoleOutput = function(opts)
 	{
@@ -10,6 +10,9 @@ var ConsoleOutput;
 		container = document.getElementById(opts.container);
 		messageContainer = document.getElementById(opts.messages);
 		counter = document.getElementById(opts.counter);
+		numCheckedLabel = document.getElementById(opts.numchecked);
+		detectTimeLabel = document.getElementById(opts.detecttime);
+		drawTimeLabel = document.getElementById(opts.drawtime);
 		ConsoleOutput.resize();
 		return ConsoleOutput;
 	};
@@ -42,8 +45,6 @@ var ConsoleOutput;
 						img.src = CanvasArtist.images["star"].src;
 						colorCell.appendChild(img);
 					}
-
-
 					tr.appendChild(labelCell);
 					tr.appendChild(colorCell);
 					rows.push(tr);
@@ -66,15 +67,23 @@ var ConsoleOutput;
 				}
 			}
 		}
-		counter.innerHTML = count/2;
+		ConsoleOutput.numEvents = count/2;
 		table.appendChild(frag);
+	};
+
+	ConsoleOutput.setLabels = function()
+	{
+		counter.innerHTML = ConsoleOutput.numEvents;
+		numCheckedLabel.innerHTML = ConsoleOutput.numChecked;
+		detectTimeLabel.innerHTML = ConsoleOutput.detectTime;
+		drawTimeLabel.innerHTML = ConsoleOutput.drawTime;
 	};
 
 	ConsoleOutput.resize = function()
 	{
 		var height = $(window).height();
-		container.style.height = height-5;
-		messageContainer.style.height = height-55;
+		container.style.height = height-5 + "px";
+		messageContainer.style.height = height-125 + "px";
 	};
 
 	ConsoleOutput.clear = function()
